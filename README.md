@@ -14,3 +14,27 @@ A web application built using **PHP**, **MySQL**, and **Bootstrap**. This app al
 
 ---
 
+## 📁 File Structure
+
+crud_app/
+│
+├── 🏠 index.php                 ← Entry point (login)
+├── 🔐 auth/
+│   ├── 🔑 login.php             ← Processes login
+│   ├── 🚪 logout.php             ← Handles logout
+│   ├── 📝 register-form.php     ← Register form
+│   └── ✅ register.php          ← Processes registration
+├── 📋 dashboard.php             ← Post-login CRUD page
+├── 🎨 assets/
+│   ├── 🎨 css/
+│   │   ├── 🎨 auth.css
+│   │   └── 📋 dashboard.css      ← Dashboard styling
+│   └── 🖼️ images/
+│       ├── 🖼️ logo.png
+│       └── 🌟 favicon.png
+├── 🔧 includes/
+│   └── 🛢️ db.php                ← Database connection
+├── 📄 README.md
+└── 🚫 .gitignore
+
+---
