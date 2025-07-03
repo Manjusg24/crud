@@ -16,6 +16,7 @@ A web application built using **PHP**, **MySQL**, and **Bootstrap**. This app al
 
 ## 📁 File Structure
 
+```
 crud_app/
 │
 ├── 🏠 index.php                 ← Entry point (login)
@@ -36,5 +37,5 @@ crud_app/
 │   └── 🛢️ db.php                ← Database connection
 ├── 📄 README.md
 └── 🚫 .gitignore
-
+```
 ---
