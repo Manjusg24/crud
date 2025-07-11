@@ -13,7 +13,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST')
     $pass=$_POST["Password"];
     $email=$_POST["Email"];
 
-    $sql="INSERT INTO `users` (`SNo`, `Full Name`, `Username`, `Password`, `Email ID`, `Mobile Number`) VALUES (1, '$fname', '$uname', '$pass', '$email', '9876054321')";
+    $hashedPassword = password_hash($pass,PASSWORD_BCRYPT);
+
+    $sql="INSERT INTO `users` (`SNo`, `Full Name`, `Username`, `Password`, `Email ID`, `Mobile Number`) VALUES (1, '$fname', '$uname', '$hashedPassword', '$email', '9876054321')";
     $res=mysqli_query($conn,$sql);
 
     
@@ -25,4 +27,5 @@ else{
 ?>
 <script>
     alert("Account has been created successfully!  Login to enter..");
+    window.location.href = "../index.php";
 </script>
