@@ -1,6 +1,12 @@
 <?php
 session_start();
 
+// Prevent browser from caching this page (except for bfcache, which requires JS to handle)
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: 0");
+
 if(isset($_SESSION['name']))
 {
     header("Location:dashboard.php");
@@ -31,4 +37,12 @@ if(isset($_SESSION['name']))
         </div>
     </div>
 </body>
+<script>
+    // Works even with bfcache (Back-Forward Cache)
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+</script>
 </html>
