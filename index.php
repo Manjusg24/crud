@@ -25,6 +25,12 @@ if(isset($_SESSION['name']))
 <body class="login-page">
     <div id="id">
         <img src="assets/images/logo.png" alt="Logo" class="logo">
+        <?php
+            if (isset($_SESSION['error'])) {
+                echo "<div class='error-message'>".$_SESSION['error']."</div>";
+                unset($_SESSION['error']);
+            }
+        ?>
         <div id="myid" class="myclass">
             <form action="auth/login.php" method="POST" id="myform">
                 <input type="text" name="uname" placeholder="Username" class="myclass" required>
