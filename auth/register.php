@@ -13,31 +13,39 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $hashedPassword = password_hash($pass,PASSWORD_BCRYPT);
 
-    // Check if username or email exists
-    $username_check = mysqli_query($conn, "SELECT * FROM users WHERE `Username` = '$uname'");
-    $email_check = mysqli_query($conn, "SELECT * FROM users WHERE `Email ID` = '$email'");
+    // Check if username exists
+    $stmt1 = $conn->prepare("SELECT * FROM users WHERE `Username` = ?");
+    $stmt1->bind_param("s", $uname);
+    $stmt1->execute();
+    $result1 = $stmt1->get_result();
 
-    if (mysqli_num_rows($username_check) > 0 && mysqli_num_rows($email_check) > 0) {
+    // Check if email exists
+    $stmt2 = $conn->prepare("SELECT * FROM users WHERE `Email ID` = ?");
+    $stmt2->bind_param("s", $uname);
+    $stmt2->execute();
+    $result2 = $stmt2->get_result();
+
+    if ($result1->num_rows() > 0 && $result2->num_rows() > 0) {
         echo "<script>
             alert('Both username and email already exist. Account was not created.');
             window.location.href = 'register-form.php';
         </script>";
-    } elseif (mysqli_num_rows($username_check) > 0) {
+    } elseif ($result1->num_rows() > 0) {
         echo "<script>
             alert('Username already exists. Please choose another.');
             window.location.href = 'register-form.php';
         </script>";
-    } elseif (mysqli_num_rows($email_check) > 0) {
+    } elseif ($result2->num_rows() > 0) {
         echo "<script>
             alert('Email already exists. Please use a different one.');
             window.location.href = 'register-form.php';
         </script>";
     } else {
         // If both are unique, insert the new user
-        $sql="INSERT INTO `users` (`Full Name`, `Username`, `Password`, `Email ID`) VALUES ('$fname', '$uname', '$hashedPassword', '$email')";
-        $res=mysqli_query($conn,$sql);
-        
-        if($res) {
+        $stmt3 = $conn->prepare("INSERT INTO `users` (`Full Name`, `Username`, `Password`, `Email ID`) VALUES (?, ?, ?, ?)");
+        $stmt3->bind_param("ssss", $fname, $uname, $epass, $email);
+
+        if($stmt3->execute()) {
             echo "<script>
                 alert('Account has been created successfully!  Login to enter..');
                 window.location.href = '../index.php';
@@ -48,7 +56,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
                 window.location.href = 'register-form.php';
                 </script>";
         }
+        $stmt3->close();
     }
+    $stmt1->close();
+    $stmt2->close();
 } else {
     echo " Error! ";
 }
