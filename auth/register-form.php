@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,6 +13,12 @@
 <body class="register-page">
     <div id="id">
         <h3>Welcome to SIGN UP Page</h3>
+        <?php
+            if (isset($_SESSION['auth_error'])) {
+                echo "<div class='error-message'>" . htmlspecialchars($_SESSION['auth_error']) . "</div>";
+                unset($_SESSION['auth_error']);
+            }
+        ?>
         <div id="myid">
             <form action="register.php" method="POST">
                 <input type="email" id="Email" name="Email" placeholder="Email" class="myclass" required>
