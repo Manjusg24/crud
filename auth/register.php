@@ -1,4 +1,5 @@
 <?php
+session_start();
 include '../includes/db.php';
 
 if(!$conn) {
@@ -26,35 +27,30 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
     $result2 = $stmt2->get_result();
 
     if ($result1->num_rows() > 0 && $result2->num_rows() > 0) {
-        echo "<script>
-            alert('Both username and email already exist. Account was not created.');
-            window.location.href = 'register-form.php';
-        </script>";
+        $_SESSION['auth_error'] = "Both username and email already exist. Account was not created";
+        header("Location: register-form.php");
+        exit();
     } elseif ($result1->num_rows() > 0) {
-        echo "<script>
-            alert('Username already exists. Please choose another.');
-            window.location.href = 'register-form.php';
-        </script>";
+        $_SESSION['auth_error'] = "Username already exists. Please choose another";
+        header("Location: register-form.php");
+        exit();
     } elseif ($result2->num_rows() > 0) {
-        echo "<script>
-            alert('Email already exists. Please use a different one.');
-            window.location.href = 'register-form.php';
-        </script>";
+        $_SESSION['auth_error'] = "Email already exists. Please use a different one";
+        header("Location: register-form.php");
+        exit();
     } else {
         // If both are unique, insert the new user
         $stmt3 = $conn->prepare("INSERT INTO `users` (`Full Name`, `Username`, `Password`, `Email ID`) VALUES (?, ?, ?, ?)");
         $stmt3->bind_param("ssss", $fname, $uname, $epass, $email);
 
         if($stmt3->execute()) {
-            echo "<script>
-                alert('Account has been created successfully!  Login to enter..');
-                window.location.href = '../index.php';
-                </script>";
+            $_SESSION['auth_error'] = "Account created successfully! You can login..";
+            header("Location: ../index.php");
+            exit();
         } else {
-            echo "<script>
-                alert('Something went wrong. Please try again later.');
-                window.location.href = 'register-form.php';
-                </script>";
+            $_SESSION['auth_error'] = "Something went wrong. Please try again later";
+            header("Location: register-form.php");
+            exit();
         }
         $stmt3->close();
     }
