@@ -7,7 +7,7 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 header("Expires: 0");
 
-if(isset($_SESSION['name']))
+if(isset($_SESSION['username']))
 {
     header("Location:dashboard.php");
     exit();
@@ -22,20 +22,20 @@ if(isset($_SESSION['name']))
     <link rel="icon" href="assets/images/favicon.png">
     <link rel="stylesheet" href="assets/css/auth.css">
 </head>
-<body class="login-page">
-    <div id="id">
+<body>
+    <div id="login-container">
         <img src="assets/images/logo.png" alt="Logo" class="logo">
         <?php
-            if (isset($_SESSION['error'])) {
-                echo "<div class='error-message'>".$_SESSION['error']."</div>";
-                unset($_SESSION['error']);
+            if (isset($_SESSION['auth_error'])) {
+                echo "<div class='error-message'>" . htmlspecialchars($_SESSION['auth_error']) . "</div>";
+                unset($_SESSION['auth_error']);
             }
         ?>
-        <div id="myid" class="myclass">
-            <form action="auth/login.php" method="POST" id="myform">
-                <input type="text" name="uname" placeholder="Username" class="myclass" required>
-                <input type="password" name="pass" placeholder="Password" class="myclass" required>
-                <input type="submit" name="submit" class="myclass" value="Log In">
+        <div id="login-form-container" class="form-wrapper">
+            <form action="auth/login.php" method="POST">
+                <input type="text" name="username" placeholder="Username" class="form-input" required>
+                <input type="password" name="password" placeholder="Password" class="form-input" required>
+                <input type="submit" class="submit-button" value="Log In">
             </form>
         </div>
         <div>
