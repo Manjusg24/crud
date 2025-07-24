@@ -3,7 +3,7 @@ session_start();
 
 include '../includes/db.php';
 
-if(isset($_POST["login_submit"])) {
+if($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = strtolower(trim($_POST["username"]));
     $password = $_POST["password"];
 
