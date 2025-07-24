@@ -10,8 +10,8 @@ session_start();
     <link rel="icon" href="../assets/images/favicon.png">
     <link rel="stylesheet" href="../assets/css/auth.css">
 </head>
-<body class="register-page">
-    <div id="id">
+<body>
+    <div id="signup-container">
         <h3>Welcome to SIGN UP Page</h3>
         <?php
             if (isset($_SESSION['auth_error'])) {
@@ -19,15 +19,14 @@ session_start();
                 unset($_SESSION['auth_error']);
             }
         ?>
-        <div id="myid">
+        <div id="signup-form-container" class="form-wrapper">
             <form action="register.php" method="POST">
-                <input type="email" id="Email" name="Email" placeholder="Email" class="myclass" required>
-                <input type="password" id="Password" name="Password" placeholder="Password" class="myclass" required>
-                <input type="text" id="Fname" name="Fname" placeholder="Fullname" class="myclass" required>
-                <input type="text" id="Username" name="Username" placeholder="Username" class="myclass" required>
+                <input type="email" id="email" name="email" placeholder="Email" class="form-input" required>
+                <input type="password" id="password" name="password" placeholder="Password" class="form-input" required>
+                <input type="text" id="fullname" name="fullname" placeholder="Fullname" class="form-input" required>
+                <input type="text" id="username" name="username" placeholder="Username" class="form-input" required>
                 <button type="submit"><b>Sign Up</b></button>
             </form>
-            
         </div>
         <div>
             <p>Have an Account? <a href="../index.php"><b>Log in</b></a></p>

@@ -3,15 +3,15 @@ session_start();
 
 include '../includes/db.php';
 
-if(isset($_POST["submit"])) {
-    $name=$_POST["uname"];
-    $pass=$_POST["pass"];
+if(isset($_POST["login_submit"])) {
+    $username = strtolower(trim($_POST["username"]));
+    $password = $_POST["password"];
 
     // Prepare the SQL query with a placeholder
     $stmt = $conn->prepare("Select * from `users` where Username = ?"); 
     
     // Bind the actual username value to the placeholder
-    $stmt->bind_param("s", $uname); // "s" means string
+    $stmt->bind_param('s',$username); // "s" means string
 
     // Execute the query
     $stmt->execute();
@@ -24,21 +24,22 @@ if(isset($_POST["submit"])) {
         $user = $result->fetch_assoc();
         
         // Verify the password
-        if(password_verify($pass,$user['Password'])) {
-            $_SESSION['name'] = $user['Username'];
+        if(password_verify($password,$user['Password'])) {
+            $_SESSION['username'] = $user['Username'];
             header("Location: ../dashboard.php");
             exit();
         } else {
-            $_SESSION['error'] = "&#x274c Password incorrect.";
+            $_SESSION['auth_error'] = "Password incorrect";
             header("Location: ../index.php");
             exit();
         }
+
     } else {
-        $_SESSION['error'] = "&#x274c Invalid username.";
+        $_SESSION['auth_error'] = "Invalid username";
         header("Location: ../index.php");
         exit();
     }
-    
+
     // Close the statement
     $stmt->close();
 } else {

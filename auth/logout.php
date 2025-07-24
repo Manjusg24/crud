@@ -9,7 +9,7 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 header("Expires: 0");
 
-if(!isset($_SESSION['name']))
+if(!isset($_SESSION['username']))
 {
     header("location:../index.php");
 }
