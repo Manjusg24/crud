@@ -8,7 +8,8 @@ body {
 }
 
 /* Shared outer container */
-#id {
+#login-container,
+#signup-container {
     width: 300px;
     padding: 20px;
     background-color: rgb(215, 248, 117);
@@ -19,7 +20,8 @@ body {
 }
 
 /* Shared form container */
-#myid {
+#login-form-container,
+#signup-form-container {
     width: 250px;
     padding: 15px;
     border: 2px solid black;
@@ -28,7 +30,7 @@ body {
 }
 
 /* Input fields */
-.myclass {
+.form-wrapper, .form-input {
     margin: 10px;
     padding: 2px;
     height: 25px;
@@ -38,8 +40,9 @@ body {
 }
 
 /* Buttons */
-input[type="submit"],
+.submit-button,
 button {
+    margin: 10px;
     height: 35px;
     width: 200px;
     color: black;
@@ -49,7 +52,7 @@ button {
     cursor: pointer;
 }
 
-input[type="submit"]:hover,
+.submit-button:hover,
 button:hover {
     background-color: blueviolet;
 }
@@ -78,11 +81,22 @@ p {
     margin-top: 10px;
 }
 
-/* 💡 Specific height tweaks per page */
-body.login-page #myid {
+/* Specific height tweaks per page */
+#login-form-container {
     height: 150px;
 }
 
-body.register-page #myid {
-    height: auto; /* allow to grow naturally */
+#signup-form-container {
+    height: auto;
+}
+
+/* Error message styling */
+.error-message{
+    color: red;
+    font-weight: bold;
+}
+
+.success-message{
+    color: green;
+    font-weight: bold;
 }
