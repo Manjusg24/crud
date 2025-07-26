@@ -26,10 +26,7 @@ if(isset($_SESSION['username']))
     <div id="login-container">
         <img src="assets/images/logo.png" alt="Logo" class="logo">
         <?php
-            if (isset($_SESSION['auth_error'])) {
-                echo "<div class='error-message'>" . htmlspecialchars($_SESSION['auth_error']) . "</div>";
-                unset($_SESSION['auth_error']);
-            }
+            include 'includes/alerts.php';
         ?>
         <div id="login-form-container" class="form-wrapper">
             <form action="auth/login.php" method="POST">
