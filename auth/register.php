@@ -9,9 +9,9 @@ if(!$conn) {
 
 if($_SERVER['REQUEST_METHOD'] == 'POST') {
     $fullname = trim($_POST["fullname"]);
-    $username = trim($_POST["username"]);
+    $username = strtolower(trim($_POST["username"]));
     $password = $_POST["password"];
-    $email = trim($_POST["email"]);
+    $email = strtolower(trim($_POST["email"]));
 
     $hashedPassword = password_hash($password,PASSWORD_BCRYPT);
 
@@ -45,7 +45,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt3->bind_param("ssss", $fullname, $username, $hashedPassword, $email);
 
         if($stmt3->execute()) {
-            $_SESSION['auth_error'] = "Account created successfully! You can login..";
+            $_SESSION['success'] = "Account created successfully! You can login..";
             header("Location: ../index.php");
             exit();
         } else {

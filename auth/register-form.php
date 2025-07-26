@@ -14,10 +14,7 @@ session_start();
     <div id="signup-container">
         <h3>Welcome to SIGN UP Page</h3>
         <?php
-            if (isset($_SESSION['auth_error'])) {
-                echo "<div class='error-message'>" . htmlspecialchars($_SESSION['auth_error']) . "</div>";
-                unset($_SESSION['auth_error']);
-            }
+            include '../includes/alerts.php';
         ?>
         <div id="signup-form-container" class="form-wrapper">
             <form action="register.php" method="POST">
