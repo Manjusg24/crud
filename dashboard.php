@@ -7,7 +7,7 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 header("Expires: 0");
 
-if (!isset($_SESSION['name'])) {
+if (!isset($_SESSION['username'])) {
     header("location:index.php");
     exit;
 }
@@ -17,13 +17,21 @@ if (!isset($_SESSION['name'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Simple Notes Dashboard</title>
     <link rel="icon" href="assets/images/favicon.png">
     <link rel="stylesheet" href="assets/css/dashboard.css">
 </head>
 <body>
-    <h1><?php echo "Hi " . $_SESSION['name'] . ", You're logged in.." ?></h1>
-    <h3><a href="auth/logout.php">Click to logout</a></h3>
+<h1>Notes Dashboard</h1>
+    <h3><a href="../auth/logout.php">Click to logout</a></h3>
+    <h2>Add New Note</h2>
+    <form action="dashboard.php" method="POST">
+        <label>Title:</label>
+        <input type="text" name="title">
+        <label>Description:</label>
+        <textarea name="description"></textarea>
+        <button>Add Note</button>
+    </form>
 </body>
 <script>
     // Works even with bfcache (Back-Forward Cache)
