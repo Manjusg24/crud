@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+include "includes/db.php";
+
 // Prevent browser from caching this page (except for bfcache, which requires JS to handle)
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
@@ -32,6 +34,36 @@ if (!isset($_SESSION['username'])) {
         <textarea name="description"></textarea>
         <button>Add Note</button>
     </form>
+    <?php
+    if($_SERVER['REQUEST_METHOD'] == "POST") {
+        $title = $_POST['title'];
+        $description = $_POST['description'];
+        $insertQuery = "insert into `notes`(`Title`,`Description`) values('$title','$description')";
+        $insertResult = mysqli_query($conn,$insertQuery);
+    }
+    ?>
+    <table>
+        <thead>
+        <tr>
+            <th>Sno</th>
+            <th>Title</th>
+            <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+            <?php
+            $note =mysqli_query($conn,"select * from notes");
+            $sno = 1;
+            while($noteResult = mysqli_fetch_assoc($note)) {
+                echo "<tr>";
+                echo "<td>" . $sno++ . "</td>";
+                echo "<td>" . $noteResult['Title'] . "</td>";
+                echo "<td>" . $noteResult['Description'] . "</td>";
+                echo "</tr>";
+            }
+            ?>
+        </tbody>
+    </table>
 </body>
 <script>
     // Works even with bfcache (Back-Forward Cache)
