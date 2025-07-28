@@ -11,7 +11,7 @@ header("Expires: 0");
 
 if (!isset($_SESSION['username'])) {
     header("location:index.php");
-    exit;
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -28,18 +28,20 @@ if (!isset($_SESSION['username'])) {
     <h3><a href="../auth/logout.php">Click to logout</a></h3>
     <h2>Add New Note</h2>
     <form action="dashboard.php" method="POST">
-        <label>Title:</label>
-        <input type="text" name="title">
-        <label>Description:</label>
-        <textarea name="description"></textarea>
-        <button>Add Note</button>
+        <label for="title">Title:</label><br>
+        <input type="text" name="title" id="title"><br><br>
+        <label for="description">Description:</label><br>
+        <textarea name="description" id="description" rows="4"></textarea><br><br>
+        <button>Add Note</button><br><br>
     </form>
     <?php
     if($_SERVER['REQUEST_METHOD'] == "POST") {
         $title = $_POST['title'];
         $description = $_POST['description'];
-        $insertQuery = "insert into `notes`(`Title`,`Description`) values('$title','$description')";
-        $insertResult = mysqli_query($conn,$insertQuery);
+        $insertQuery = $conn->prepare("insert into `notes`(`Title`,`Description`) values(?, ?)");
+        $insertQuery->bind_param('ss',$title,$description);
+        $insertQuery->execute();
+        $insertQuery->close();
     }
     ?>
     <table>
@@ -57,8 +59,8 @@ if (!isset($_SESSION['username'])) {
             while($noteResult = mysqli_fetch_assoc($note)) {
                 echo "<tr>";
                 echo "<td>" . $sno++ . "</td>";
-                echo "<td>" . $noteResult['Title'] . "</td>";
-                echo "<td>" . $noteResult['Description'] . "</td>";
+                echo "<td>" . htmlspecialchars($noteResult['Title']) . "</td>";
+                echo "<td>" . htmlspecialchars($noteResult['Description']) . "</td>";
                 echo "</tr>";
             }
             ?>
