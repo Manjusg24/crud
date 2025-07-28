@@ -42,6 +42,9 @@ if (!isset($_SESSION['username'])) {
         $insertQuery->bind_param('ss',$title,$description);
         $insertQuery->execute();
         $insertQuery->close();
+
+        header("location:dashboard.php");
+        exit();
     }
     ?>
     <table>
