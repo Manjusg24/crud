@@ -36,12 +36,17 @@ if (!isset($_SESSION['username'])) {
     </form>
     <?php
     if($_SERVER['REQUEST_METHOD'] == "POST") {
-        $title = $_POST['title'];
-        $description = $_POST['description'];
-        $insertQuery = $conn->prepare("insert into `notes`(`Title`,`Description`) values(?, ?)");
-        $insertQuery->bind_param('ss',$title,$description);
-        $insertQuery->execute();
-        $insertQuery->close();
+        $title = trim($_POST['title']);
+        $description = trim($_POST['description']);
+
+        if(empty($title) || empty($description)) {
+            echo "Both fields are required";
+        } else {
+            $insertQuery = $conn->prepare("insert into `notes`(`Title`,`Description`) values(?, ?)");
+            $insertQuery->bind_param('ss',$title,$description);
+            $insertQuery->execute();
+            $insertQuery->close();    
+        }
 
         header("location:dashboard.php");
         exit();
