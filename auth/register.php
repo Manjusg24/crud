@@ -13,6 +13,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
     $password = $_POST["password"];
     $email = strtolower(trim($_POST["email"]));
 
+    // Server-side validation
+    if (empty($fullname) || empty($username) || empty($password) || empty($email)) {
+        $_SESSION['auth_error'] = "All fields are required to register.";
+        header("Location: register-form.php");
+        exit();
+    }
+    
     $hashedPassword = password_hash($password,PASSWORD_BCRYPT);
 
     // Check if username exists

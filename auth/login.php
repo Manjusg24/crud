@@ -4,8 +4,16 @@ session_start();
 include '../includes/db.php';
 
 if($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Trim and normalize inputs
     $username = strtolower(trim($_POST["username"]));
     $password = $_POST["password"];
+
+    // Server-side input validation
+    if(empty($username) || empty($password)) {
+        $_SESSION['auth_error'] = "Both username and password are required.";
+        header("location:../index.php");
+        exit();
+    }
 
     // Prepare the SQL query with a placeholder
     $stmt = $conn->prepare("Select * from `users` where Username = ?"); 
