@@ -133,3 +133,31 @@ table tr:hover {
         font-size: 14px;
     }
 }
+
+/* Action buttons */
+.action-buttons a {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-right: 5px;
+    text-decoration: none;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.9em;
+    transition: background 0.3s ease;
+}
+
+.action-buttons .edit {
+    background-color: #27ae60;
+}
+
+.action-buttons .edit:hover {
+    background-color: #219150;
+}
+
+.action-buttons .delete {
+    background-color: #e74c3c;
+}
+
+.action-buttons .delete:hover {
+    background-color: #c0392b;
+}
