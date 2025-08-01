@@ -58,6 +58,7 @@ if (!isset($_SESSION['username'])) {
             <th>Sno</th>
             <th>Title</th>
             <th>Description</th>
+            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -69,6 +70,10 @@ if (!isset($_SESSION['username'])) {
                 echo "<td>" . $sno++ . "</td>";
                 echo "<td>" . htmlspecialchars($noteResult['Title']) . "</td>";
                 echo "<td>" . htmlspecialchars($noteResult['Description']) . "</td>";
+                echo "<td class='action-buttons'>";
+                echo "<a href='notes/edit.php' class='edit'>Edit</a>";
+                echo "<a href='notes/delete.php' class='delete'>Delete</a>";
+                echo "</td>";
                 echo "</tr>";
             }
             ?>
