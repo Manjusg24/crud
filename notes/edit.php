@@ -1,6 +1,7 @@
 <?php
 include "../includes/db.php";
 
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,17 +15,17 @@ include "../includes/db.php";
 <body>
     <?php
      if($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $title = trim($_POST['title']);
-        $description = trim($_POST['description']);
-        $edit = intval($_POST['note_id']);
+        $noteTitle = trim($_POST['title']);
+        $noteDescription = trim($_POST['description']);
+        $noteId = intval($_POST['note_id']);
 
-        if(empty($title) || empty($description)) {
+        if(empty($noteTitle) || empty($noteDescription)) {
             echo "Title and Description required";
         } else {
-            $updateQuery = $conn->prepare("UPDATE notes set Title = ?, Description = ? where note_id = ?");
-            $updateQuery->bind_param("ssi",$title,$description,$edit);
+            $updateNote = $conn->prepare("UPDATE notes set Title = ?, Description = ? where note_id = ?");
+            $updateNote->bind_param("ssi",$noteTitle,$noteDescription,$noteId);
             
-            if($updateQuery->execute()) {
+            if($updateNote->execute()) {
                 header("location:../dashboard.php");
                 exit();
             } else {
@@ -34,23 +35,23 @@ include "../includes/db.php";
     }
     if(isset($_GET['edit'])) {
         
-        $edit = intval($_GET['edit']);  // sanitize user input
+        $noteId = intval($_GET['edit']);  // sanitize user input
 
         // use prepared statement
-        $sql = $conn->prepare("select * from notes where note_id=?");
-        $sql->bind_param("i",$edit);
-        $sql->execute();
-        $res = $sql->get_result();
+        $selectNote = $conn->prepare("select * from notes where note_id=?");
+        $selectNote->bind_param("i",$noteId);
+        $selectNote->execute();
+        $fetchNote = $selectNote->get_result();
 
-        $note = mysqli_fetch_assoc($res);  // safely fetch result
+        $noteData = mysqli_fetch_assoc($fetchNote);  // safely fetch result
     
-        if($note) {
+        if($noteData) {
             echo  "<form action='edit.php' method='POST' class='edit-form'>
-            <input type='hidden' name='note_id' value='" . $edit . "'>
+                    <input type='hidden' name='note_id' value='" . $noteId . "'>
                     <label for='title'>Title:</label>
-                    <input type='text' name='title' id='title' value='" . htmlspecialchars($note['Title']) . "'>
+                    <input type='text' name='title' id='title' value='" . htmlspecialchars($noteData['Title']) . "'>
                     <label for='description'>Description:</label>
-                    <textarea name='description' id='description' rows='4'>" . htmlspecialchars($note['Description']) . "</textarea>
+                    <textarea name='description' id='description' rows='4'>" . htmlspecialchars($noteData['Description']) . "</textarea>
                     <div class='form-actions'>
                     <a href='../dashboard.php' class='cancel-link'>Cancel</a>
                     <button type='submit'>Update Note</button>
