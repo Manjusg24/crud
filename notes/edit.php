@@ -1,7 +1,16 @@
 <?php
 include "../includes/db.php";
 
+session_start();
 
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+header("Expires: 0");
+
+if(!isset($_SESSION['username'])) {
+    header("location:../index.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,4 +74,12 @@ include "../includes/db.php";
     }
     ?>
 </body>
+<script>
+    // Works even with bfcache (Back-Forward Cache)
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+</script>
 </html>
