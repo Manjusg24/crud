@@ -40,11 +40,13 @@ if (!isset($_SESSION['username'])) {
     ?>
     
     <!-- Form for creating a new note -->
-    <form action="dashboard.php" method="POST">
+    <form action="dashboard.php" method="POST" enctype="multipart/form-data">
         <label for="title">Title:</label><br>
         <input type="text" name="title" id="title"><br><br>
         <label for="description">Description:</label><br>
         <textarea name="description" id="description" rows="4"></textarea><br><br>
+        <label for="file">Upload File:</label>
+        <input type="file" name="file" id="file"><br><br>
         <button>Add Note</button><br><br>
     </form>
 
@@ -53,14 +55,30 @@ if (!isset($_SESSION['username'])) {
     if($_SERVER['REQUEST_METHOD'] == "POST") {
         $noteTitle = trim($_POST['title']);
         $noteDescription = trim($_POST['description']);
+        
+        if(isset($_FILES['file'])) {
+            $uploadDirectory = "uploads/";
+            $originalFilename = basename($_FILES['file']['name']);
+            $allowedExtensions = ['pdf','txt','jpg','jpeg','png'];
+            $fileExtension = strtolower(pathinfo($originalFilename,PATHINFO_EXTENSION));
+            $targetFilePath = $uploadDirectory . $originalFilename;
+
+            if(!in_array($fileExtension,$allowedExtensions)) {
+                $_SESSION['error'] = "Invalid file type";
+            }
+            
+            if(move_uploaded_file($_FILES['file']['tmp_name'], $targetFilePath)) {
+                $_SESSION['success'] = "File uploaded successfully";
+            }
+        }
 
         if(empty($noteTitle) || empty($noteDescription)) {
             $_SESSION['error'] = "Both fields are required.";
         } else {
 
             // Insert the new note into the database
-            $insertQuery = $conn->prepare("insert into `notes`(`Title`,`Description`) values(?, ?)");
-            $insertQuery->bind_param('ss',$noteTitle,$noteDescription);
+            $insertQuery = $conn->prepare("insert into `notes`(`Title`,`Description`,`Filename`) values(?, ?, ?)");
+            $insertQuery->bind_param('sss',$noteTitle,$noteDescription,$originalFilename);
             $insertQuery->execute();
             $insertQuery->close();    
         }
@@ -73,9 +91,10 @@ if (!isset($_SESSION['username'])) {
     <table>
         <thead>
         <tr>
-            <th>Sno</th>
+            <th>#</th>
             <th>Title</th>
             <th>Description</th>
+            <th>File Name</th>
             <th>Actions</th>
         </tr>
         </thead>
@@ -89,6 +108,12 @@ if (!isset($_SESSION['username'])) {
                 echo "<td>" . $serialNumber++ . "</td>";
                 echo "<td>" . htmlspecialchars($note['Title']) . "</td>";
                 echo "<td>" . htmlspecialchars($note['Description']) . "</td>";
+                $targetFilePath = "uploads/" . $note['Filename'];
+                if(!empty($note['Filename']) && file_exists($targetFilePath)) {
+                    echo "<td>" . htmlspecialchars($note['Filename']) . " <a href='uploads/" . urlencode($note['Filename']) . "' class='download-link' download>Download</a> </td>";
+                } else {
+                    echo "<td>---</td>";
+                }
                 echo "<td class='action-buttons'>";
                 echo "<a href='notes/edit.php?edit=" . $note['note_id'] . "' class='edit'>Edit</a>";
                 echo "<a href='notes/delete.php?delete=" . $note['note_id'] . "' class='delete' onclick='return confirm(\"Are you sure. Do you want to delete this note?\");'>Delete</a>";
