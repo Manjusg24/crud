@@ -51,43 +51,56 @@ if (!isset($_SESSION['username'])) {
     </form>
 
     <?php
-    // Handle form submission
-    if($_SERVER['REQUEST_METHOD'] == "POST") {
+    if ($_SERVER['REQUEST_METHOD'] == "POST") {
         $noteTitle = trim($_POST['title']);
         $noteDescription = trim($_POST['description']);
-        
-        if(isset($_FILES['file'])) {
+        $originalFilename = "";
+        $targetFilePath = "";
+        $fileIsValid = false;
+        $errors = [];
+
+        // Validate fields
+        if (empty($noteTitle) || empty($noteDescription)) {
+            $errors[] = "Both title and description are required.";
+        }
+
+        // Check if file was uploaded
+        if (isset($_FILES['file']) && $_FILES['file']['error'] !== 4) {
+            $allowedExtensions = ['pdf', 'txt', 'jpg', 'jpeg', 'png'];
             $uploadDirectory = "uploads/";
+
             $originalFilename = basename($_FILES['file']['name']);
-            $allowedExtensions = ['pdf','txt','jpg','jpeg','png'];
-            $fileExtension = strtolower(pathinfo($originalFilename,PATHINFO_EXTENSION));
+            $originalFilename = preg_replace("/[^a-zA-Z0-9\.\-_]/", "", $originalFilename);
+            $fileExtension = strtolower(pathinfo($originalFilename, PATHINFO_EXTENSION));
             $targetFilePath = $uploadDirectory . $originalFilename;
 
-            if(!in_array($fileExtension,$allowedExtensions)) {
-                $_SESSION['error'] = "Invalid file type";
-            }
-            
-            if(move_uploaded_file($_FILES['file']['tmp_name'], $targetFilePath)) {
-                $_SESSION['success'] = "File uploaded successfully";
+            if (!in_array($fileExtension, $allowedExtensions)) {
+                $errors[] = "Invalid file type.";
+            } elseif (!move_uploaded_file($_FILES['file']['tmp_name'], $targetFilePath)) {
+                $errors[] = "Failed to upload file.";
             }
         }
 
-        if(empty($noteTitle) || empty($noteDescription)) {
-            $_SESSION['error'] = "Both fields are required.";
+        // Insert into DB if no errors
+        if (empty($errors)) {
+            $stmt = $conn->prepare("INSERT INTO notes (Title, Description, Filename) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $noteTitle, $noteDescription, $originalFilename);
+            if ($stmt->execute()) {
+                $_SESSION['success'] = "Note added successfully.";
+            } else {
+                $_SESSION['error'] = "Database insert failed.";
+            }
+            $stmt->close();
         } else {
-
-            // Insert the new note into the database
-            $insertQuery = $conn->prepare("insert into `notes`(`Title`,`Description`,`Filename`) values(?, ?, ?)");
-            $insertQuery->bind_param('sss',$noteTitle,$noteDescription,$originalFilename);
-            $insertQuery->execute();
-            $insertQuery->close();    
+            $_SESSION['error'] = implode("<br>", $errors);
         }
 
         // Prevent resubmission on refresh
-        header("location:dashboard.php");
+        header("Location: dashboard.php");
         exit();
-    }
-    ?>
+}
+?>
+
     <table>
         <thead>
         <tr>
