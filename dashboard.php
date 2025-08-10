@@ -26,19 +26,16 @@ if (!isset($_SESSION['username'])) {
 </head>
 <body>
     <nav>
-    <h1>Notes Dashboard</h1>
-    <h3><a href="auth/logout.php">Click to logout</a></h3>
+        <h1>Notes Dashboard</h1>
+        <h3><a href="auth/logout.php">Click to logout</a></h3>
     </nav>
     <h2>Add New Note</h2>
     
     <?php
-    // Show one-time error message if fields were empty
-    if(isset($_SESSION['error'])) {
-        echo htmlspecialchars($_SESSION['error']);
-        unset($_SESSION['error']);
-    }
+        // Show one-time error message
+        include "includes/alerts.php";
     ?>
-    
+
     <!-- Form for creating a new note -->
     <form action="dashboard.php" method="POST" enctype="multipart/form-data">
         <label for="title">Title:</label><br>
@@ -49,7 +46,7 @@ if (!isset($_SESSION['username'])) {
         <input type="file" name="file" id="file"><br><br>
         <button>Add Note</button><br><br>
     </form>
-
+    
     <?php
     // Handle form submission on POST request
     if($_SERVER['REQUEST_METHOD'] == "POST") {
@@ -69,15 +66,26 @@ if (!isset($_SESSION['username'])) {
         if(isset($_FILES['file']) && $_FILES['file']['error'] !== 4) {
             $uploadDirectory = "uploads/";
             $originalFilename = preg_replace("/[^a-zA-Z0-9\.\-_]/","",basename($_FILES['file']['name']));
-            $allowedExtensions = ['pdf','txt','jpg','jpeg','png'];
-            $fileExtension = strtolower(pathinfo($originalFilename,PATHINFO_EXTENSION));
             $targetFilePath = $uploadDirectory . $originalFilename;
 
-            // Validate file type
-            if(!in_array($fileExtension,$allowedExtensions)) {
-                $error[] = "Invalid file type";
+            // Use finfo to detect MIME type and ensure it's allowed
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo,$_FILES['file']['tmp_name']);
+            $allowedMimeTypes = ['application/pdf', 'image/jpeg', 'text/plain'];
+
+            // Checks file size not exceed 5MB
+            $maxFileSize = 5 * 1024 *1024;
+
+            if($_FILES['file']['size'] > $maxFileSize) {
+                $error[] = "File size exceeds 5MB";
             } else {
-                $fileIsValid = true;
+
+                // Validate file type
+                if(!in_array($mime,$allowedMimeTypes)) {
+                    $error[] = "Invalid file type";
+                } else {
+                    $fileIsValid = true;
+                }
             }
         }
 
