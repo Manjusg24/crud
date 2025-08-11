@@ -48,12 +48,24 @@ if (!isset($_SESSION['username'])) {
     </form>
     
     <?php
+    // Generate a unique file name to avoid overwriting existing files
+    function generateUniqueFileName($sanitizedFilename) {
+        $timestamp = date('Ymd_His');
+        $randomString = bin2hex(random_bytes(4));
+        $fileExtension = pathinfo($sanitizedFilename,PATHINFO_EXTENSION);
+        $baseName = pathinfo($sanitizedFilename,PATHINFO_FILENAME);
+        return $baseName . "_" . $timestamp . "_" . $randomString . "." . $fileExtension;
+    }
+    
     // Handle form submission on POST request
     if($_SERVER['REQUEST_METHOD'] == "POST") {
         $noteTitle = trim($_POST['title']);
         $noteDescription = trim($_POST['description']);
         $originalFilename = "";
+        $sanitizedFilename = "";
+        $uniqueFilename = "";
         $targetFilePath = "";
+        $displayFilePath = "";
         $fileIsValid = false;
         $error = [];
 
@@ -65,8 +77,10 @@ if (!isset($_SESSION['username'])) {
         // Handle file upload if a file is provided
         if(isset($_FILES['file']) && $_FILES['file']['error'] !== 4) {
             $uploadDirectory = "uploads/";
-            $originalFilename = preg_replace("/[^a-zA-Z0-9\.\-_]/","",basename($_FILES['file']['name']));
-            $targetFilePath = $uploadDirectory . $originalFilename;
+            $originalFilename = basename($_FILES['file']['name']);
+            $sanitizedFilename = preg_replace("/[^a-zA-Z0-9\.\-_]/","",basename($_FILES['file']['name']));
+            $uniqueFilename = generateUniqueFileName($sanitizedFilename);
+            $targetFilePath = $uploadDirectory . $uniqueFilename;
 
             // Use finfo to detect MIME type and ensure it's allowed
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -91,8 +105,8 @@ if (!isset($_SESSION['username'])) {
 
         // If no errors, insert note into the database
         if(empty($error)) {
-            $insertQuery = $conn->prepare("insert into `notes`(`Title`,`Description`,`Filename`) values(?, ?, ?)");
-            $insertQuery->bind_param('sss',$noteTitle,$noteDescription,$originalFilename);
+            $insertQuery = $conn->prepare("insert into `notes`(`Title`,`Description`,`OriginalFilename`,`Filename`) values(?, ?, ?, ?)");
+            $insertQuery->bind_param('ssss',$noteTitle,$noteDescription,$originalFilename,$uniqueFilename);
                 
             if($insertQuery->execute()) {
                 // Move uploaded file to target directory if valid
@@ -133,9 +147,9 @@ if (!isset($_SESSION['username'])) {
                 echo "<td>" . $serialNumber++ . "</td>";
                 echo "<td>" . htmlspecialchars($note['Title']) . "</td>";
                 echo "<td>" . htmlspecialchars($note['Description']) . "</td>";
-                $targetFilePath = "uploads/" . $note['Filename'];
-                if(!empty($note['Filename']) && file_exists($targetFilePath)) {
-                    echo "<td>" . htmlspecialchars($note['Filename']) . " <a href='uploads/" . urlencode($note['Filename']) . "' class='download-link' download>Download</a> </td>";
+                $displayFilePath = "uploads/" . $note['Filename'];
+                if(!empty($note['Filename']) && file_exists($displayFilePath)) {
+                    echo "<td>" . htmlspecialchars($note['OriginalFilename']) . " <a href='uploads/" . rawurlencode($note['Filename']) . "' class='download-link' download='" . htmlspecialchars($note['OriginalFilename']) . "'>Download</a> </td>";
                 } else {
                     echo "<td>---</td>";
                 }
