@@ -149,7 +149,7 @@ if (!isset($_SESSION['username'])) {
                 echo "<td>" . htmlspecialchars($note['Description']) . "</td>";
                 $displayFilePath = "uploads/" . $note['Filename'];
                 if(!empty($note['Filename']) && file_exists($displayFilePath)) {
-                    echo "<td>" . htmlspecialchars($note['OriginalFilename']) . " <a href='uploads/" . rawurlencode($note['Filename']) . "' class='download-link' download='" . htmlspecialchars($note['OriginalFilename']) . "'>Download</a> </td>";
+                    echo "<td><div class='file-cell'><span class='filename'> <a href='notes/view.php?view=" . $note['note_id'] . "' target='_blank' rel='noopener noreferrer'>" . htmlspecialchars($note['OriginalFilename']) . "</a></span> <a href='uploads/" . rawurlencode($note['Filename']) . "' class='download-link' download='" . htmlspecialchars($note['OriginalFilename']) . "'>Download</a> </div> </td>";
                 } else {
                     echo "<td>---</td>";
                 }
