@@ -139,9 +139,26 @@ if (!isset($_SESSION['username'])) {
         </thead>
         <tbody>
             <?php
+            // How many notes to display per page
+            $notesPerPage = 5;
+
+            // Get the current page from the URL (default to 1 if not set or invalid)
+            $currentPage = isset($_GET['page']) && is_numeric($_GET['page']) ? (int) $_GET['page'] : 1;
+
+            // Calculate the OFFSET for SQL query (skip this many records)
+            $offset = ($currentPage - 1) * $notesPerPage;
+
+            $totalNotesQuery = mysqli_query($conn,"select count(*) as total from notes");
+
+            $totalNotesRow = mysqli_fetch_assoc($totalNotesQuery);
+
+            $totalNotes = $totalNotesRow['total'];
+
+            $totalPages = ceil($totalNotes/$notesPerPage);
+
             // Fetch and display all notes
-            $notesResult = mysqli_query($conn,"select * from notes");
-            $serialNumber = 1;
+            $notesResult = mysqli_query($conn,"select * from notes limit $notesPerPage offset $offset");
+            $serialNumber = $offset + 1;
             while($note = mysqli_fetch_assoc($notesResult)) {
                 echo "<tr>";
                 echo "<td>" . $serialNumber++ . "</td>";
@@ -162,6 +179,28 @@ if (!isset($_SESSION['username'])) {
             ?>
         </tbody>
     </table>
+    <?php
+        // Display pagination navigation:
+        echo "<div class='pagination'>";
+        
+        // Shows "prev" link if not on the first page
+        if($currentPage > 1) {
+            echo "<a href='?page=" . ($currentPage - 1) . "'>&laquo; prev</a>";
+        }
+
+        // Loops through all pages to generate page number links, highlighting the current page
+        for($i = 1; $i <= $totalPages; $i++) {
+            $class = ($i == $currentPage) ? 'active' : '';
+            echo "<a href='?page={$i}' class='{$class}'>{$i}</a>";
+        }
+    
+        // Shows "next" link if not on the last page
+        if($currentPage < $totalPages) {
+            echo "<a href='?page=" . ($currentPage + 1) . "'>next &raquo;</a>";
+        }
+
+        echo "</div>";
+    ?>
 </body>
 <script>
     // Works even with bfcache (Back-Forward Cache)
