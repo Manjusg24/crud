@@ -14,6 +14,8 @@ if (!isset($_SESSION['username'])) {
     header("location:index.php");
     exit();
 }
+
+$userId = $_SESSION['userid'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -105,8 +107,8 @@ if (!isset($_SESSION['username'])) {
 
         // If no errors, insert note into the database
         if(empty($error)) {
-            $insertQuery = $conn->prepare("insert into `notes`(`Title`,`Description`,`OriginalFilename`,`Filename`) values(?, ?, ?, ?)");
-            $insertQuery->bind_param('ssss',$noteTitle,$noteDescription,$originalFilename,$uniqueFilename);
+            $insertQuery = $conn->prepare("insert into `notes`(`Title`,`Description`,`OriginalFilename`,`Filename`,`user_id`) values(?, ?, ?, ?, ?)");
+            $insertQuery->bind_param('sssss',$noteTitle,$noteDescription,$originalFilename,$uniqueFilename,$userId);
                 
             if($insertQuery->execute()) {
                 // Move uploaded file to target directory if valid
@@ -148,7 +150,7 @@ if (!isset($_SESSION['username'])) {
             // Calculate the OFFSET for SQL query (skip this many records)
             $offset = ($currentPage - 1) * $notesPerPage;
 
-            $totalNotesQuery = mysqli_query($conn,"select count(*) as total from notes");
+            $totalNotesQuery = mysqli_query($conn,"SELECT count(*) AS total FROM notes WHERE user_id = '$userId'");
 
             $totalNotesRow = mysqli_fetch_assoc($totalNotesQuery);
 
@@ -157,7 +159,7 @@ if (!isset($_SESSION['username'])) {
             $totalPages = ceil($totalNotes/$notesPerPage);
 
             // Fetch and display all notes
-            $notesResult = mysqli_query($conn,"select * from notes limit $notesPerPage offset $offset");
+            $notesResult = mysqli_query($conn,"SELECT * FROM notes WHERE user_id = '$userId' limit $notesPerPage offset $offset");
             $serialNumber = $offset + 1;
             while($note = mysqli_fetch_assoc($notesResult)) {
                 echo "<tr>";
