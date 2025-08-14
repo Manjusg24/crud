@@ -7,6 +7,12 @@ if(!$conn) {
     echo "Something went wrong. Please try again later.";
 }
 
+// Generate Unique UserId
+do {
+    $userId = bin2hex(random_bytes(4));
+    $check = mysqli_query($conn,"SELECT 1 FROM users WHERE user_id = $userId");
+} while($check->num_rows > 0);
+
 if($_SERVER['REQUEST_METHOD'] == 'POST') {
     $fullname = trim($_POST["fullname"]);
     $username = strtolower(trim($_POST["username"]));
@@ -15,7 +21,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Server-side validation
     if (empty($fullname) || empty($username) || empty($password) || empty($email)) {
-        $_SESSION['auth_error'] = "All fields are required to register.";
+        $_SESSION['error'] = "All fields are required to register.";
         header("Location: register-form.php");
         exit();
     }
@@ -35,28 +41,28 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
     $result2 = $stmt2->get_result();
 
     if ($result1->num_rows > 0 && $result2->num_rows > 0) {
-        $_SESSION['auth_error'] = "Both username and email already exist. Account was not created";
+        $_SESSION['error'] = "Both username and email already exist. Account was not created";
         header("Location: register-form.php");
         exit();
     } elseif ($result1->num_rows > 0) {
-        $_SESSION['auth_error'] = "Username already exists. Please choose another";
+        $_SESSION['error'] = "Username already exists. Please choose another";
         header("Location: register-form.php");
         exit();
     } elseif ($result2->num_rows > 0) {
-        $_SESSION['auth_error'] = "Email already exists. Please use a different one";
+        $_SESSION['error'] = "Email already exists. Please use a different one";
         header("Location: register-form.php");
         exit();
     } else {
         // If both are unique, insert the new user
-        $stmt3 = $conn->prepare("INSERT INTO `users` (`Full Name`, `Username`, `Password`, `Email ID`) VALUES (?, ?, ?, ?)");
-        $stmt3->bind_param("ssss", $fullname, $username, $hashedPassword, $email);
+        $stmt3 = $conn->prepare("INSERT INTO `users` (`Full Name`, `Username`, `Password`, `Email ID`, `user_id`) VALUES (?, ?, ?, ?, ?)");
+        $stmt3->bind_param("sssss", $fullname, $username, $hashedPassword, $email, $userId);
 
         if($stmt3->execute()) {
             $_SESSION['success'] = "Account created successfully! You can login..";
             header("Location: ../index.php");
             exit();
         } else {
-            $_SESSION['auth_error'] = "We couldn't create your account right now. Please try again shortly.";
+            $_SESSION['error'] = "We couldn't create your account right now. Please try again shortly.";
             header("Location: register-form.php");
             exit();
         }

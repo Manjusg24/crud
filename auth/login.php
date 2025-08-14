@@ -10,7 +10,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Server-side input validation
     if(empty($username) || empty($password)) {
-        $_SESSION['auth_error'] = "Both username and password are required.";
+        $_SESSION['error'] = "Both username and password are required.";
         header("location:../index.php");
         exit();
     }
@@ -34,16 +34,17 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Verify the password
         if(password_verify($password,$user['Password'])) {
             $_SESSION['username'] = $user['Username'];
+            $_SESSION['userid'] = $user['user_id'];
             header("Location: ../dashboard.php");
             exit();
         } else {
-            $_SESSION['auth_error'] = "Password incorrect";
+            $_SESSION['error'] = "Password incorrect";
             header("Location: ../index.php");
             exit();
         }
 
     } else {
-        $_SESSION['auth_error'] = "Invalid username";
+        $_SESSION['error'] = "Invalid username";
         header("Location: ../index.php");
         exit();
     }
