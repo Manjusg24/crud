@@ -11,6 +11,8 @@ if(!isset($_SESSION['username'])) {
     header("location:../index.php");
     exit();
 }
+
+$userId = $_SESSION['userid'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,8 +33,8 @@ if(!isset($_SESSION['username'])) {
         if(empty($noteTitle) || empty($noteDescription)) {
             echo "Title and Description required";
         } else {
-            $updateNote = $conn->prepare("UPDATE notes set Title = ?, Description = ? where note_id = ?");
-            $updateNote->bind_param("ssi",$noteTitle,$noteDescription,$noteId);
+            $updateNote = $conn->prepare("UPDATE notes set Title = ?, Description = ? where note_id = ? and user_id = ?");
+            $updateNote->bind_param("ssis",$noteTitle,$noteDescription,$noteId,$userId);
             
             if($updateNote->execute()) {
                 header("location:../dashboard.php");
@@ -47,8 +49,8 @@ if(!isset($_SESSION['username'])) {
         $noteId = intval($_GET['edit']);  // sanitize user input
 
         // use prepared statement
-        $selectNote = $conn->prepare("select * from notes where note_id=?");
-        $selectNote->bind_param("i",$noteId);
+        $selectNote = $conn->prepare("SELECT * FROM notes WHERE note_id = ? AND user_id = ?");
+        $selectNote->bind_param("is",$noteId,$userId);
         $selectNote->execute();
         $fetchNote = $selectNote->get_result();
 

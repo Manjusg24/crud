@@ -3,11 +3,13 @@ session_start();
 
 include "../includes/db.php";
 
+$userId = $_SESSION['userid'];
+
 if(isset($_GET['view'])) {
     $noteId = intval($_GET['view']);
 
-    $getNoteFile = $conn->prepare("SELECT Filename, OriginalFilename FROM notes where note_id = ?");
-    $getNoteFile->bind_param("i",$noteId);
+    $getNoteFile = $conn->prepare("SELECT Filename, OriginalFilename FROM notes WHERE note_id = ? AND user_id = ?");
+    $getNoteFile->bind_param("is",$noteId,$userId);
     $getNoteFile->execute();
     $result = $getNoteFile->get_result();
     $noteFileData = $result->fetch_assoc();
