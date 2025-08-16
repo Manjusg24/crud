@@ -10,9 +10,13 @@ header("Pragma: no-cache");
 header("Expires: 0");
 
 // Redirect unauthenticated users
-if (!isset($_SESSION['username'])) {
+if (!isset($_SESSION['username']) || !isset($_SESSION['userid'])) {
     header("location:index.php");
     exit();
+}
+
+if(!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
 $userId = $_SESSION['userid'];
@@ -40,6 +44,7 @@ $userId = $_SESSION['userid'];
 
     <!-- Form for creating a new note -->
     <form action="dashboard.php" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
         <label for="title">Title:</label><br>
         <input type="text" name="title" id="title"><br><br>
         <label for="description">Description:</label><br>
@@ -61,6 +66,11 @@ $userId = $_SESSION['userid'];
     
     // Handle form submission on POST request
     if($_SERVER['REQUEST_METHOD'] == "POST") {
+        
+        if(!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+            die("CSRF token not set!");
+        }
+
         $noteTitle = trim($_POST['title']);
         $noteDescription = trim($_POST['description']);
         $originalFilename = "";
@@ -78,7 +88,7 @@ $userId = $_SESSION['userid'];
 
         // Handle file upload if a file is provided
         if(isset($_FILES['file']) && $_FILES['file']['error'] !== 4) {
-            $uploadDirectory = "uploads/";
+            $uploadDirectory = __DIR__ . "/../../uploads/";
             $originalFilename = basename($_FILES['file']['name']);
             $sanitizedFilename = preg_replace("/[^a-zA-Z0-9\.\-_]/","",basename($_FILES['file']['name']));
             $uniqueFilename = generateUniqueFileName($sanitizedFilename);
@@ -166,15 +176,19 @@ $userId = $_SESSION['userid'];
                 echo "<td>" . $serialNumber++ . "</td>";
                 echo "<td>" . htmlspecialchars($note['Title']) . "</td>";
                 echo "<td>" . htmlspecialchars($note['Description']) . "</td>";
-                $displayFilePath = "uploads/" . $note['Filename'];
+                $displayFilePath = __DIR__ . "/../../uploads/" . $note['Filename'];
                 if(!empty($note['Filename']) && file_exists($displayFilePath)) {
                     echo "<td><div class='file-cell'><span class='filename'> <a href='notes/view.php?view=" . $note['note_id'] . "' target='_blank' rel='noopener noreferrer'>" . htmlspecialchars($note['OriginalFilename']) . "</a></span> <a href='uploads/" . rawurlencode($note['Filename']) . "' class='download-link' download='" . htmlspecialchars($note['OriginalFilename']) . "'>Download</a> </div> </td>";
                 } else {
                     echo "<td>---</td>";
                 }
                 echo "<td class='action-buttons'>";
-                echo "<a href='notes/edit.php?edit=" . $note['note_id'] . "' class='edit'>Edit</a>";
-                echo "<a href='notes/delete.php?delete=" . $note['note_id'] . "' class='delete' onclick='return confirm(\"Are you sure. Do you want to delete this note?\");'>Delete</a>";
+                echo "<a href='notes/edit.php?edit=" . $note['note_id'] . "'>Edit</a>";
+                echo "<form action='notes/delete.php' method='POST' onclick='return confirm(\"Are you sure. Do you want to delete this note?\");'>
+                    <input type='hidden' name='note_id' value='" . $note['note_id'] . "'>
+                    <input type='hidden' name='csrf_token' value='" . $_SESSION['csrf_token'] . "'>
+                    <button type='submit' class='delete'>Delete</button>
+                     </form>";
                 echo "</td>";
                 echo "</tr>";
             }
@@ -191,11 +205,13 @@ $userId = $_SESSION['userid'];
         }
 
         // Loops through all pages to generate page number links, highlighting the current page
-        for($i = 1; $i <= $totalPages; $i++) {
-            $class = ($i == $currentPage) ? 'active' : '';
-            echo "<a href='?page={$i}' class='{$class}'>{$i}</a>";
+        if($totalPages > 1) {
+            for($i = 1; $i <= $totalPages; $i++) {
+                $class = ($i == $currentPage) ? 'active' : '';
+                echo "<a href='?page={$i}' class='{$class}'>{$i}</a>";
+            }
         }
-    
+        
         // Shows "next" link if not on the last page
         if($currentPage < $totalPages) {
             echo "<a href='?page=" . ($currentPage + 1) . "'>next &raquo;</a>";
