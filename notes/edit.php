@@ -3,16 +3,71 @@ include "../includes/db.php";
 
 session_start();
 
+// Prevent caching for security
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-if(!isset($_SESSION['username'])) {
+// Redirect if user not authenticated
+if(!isset($_SESSION['username']) || !isset($_SESSION['userid'])) {
     header("location:../index.php");
     exit();
 }
 
 $userId = $_SESSION['userid'];
+
+// Handle form submission for note update
+if($_SERVER['REQUEST_METHOD'] == "POST") {
+
+    // CSRF token validation
+    if(!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die("csrf token mismatch");
+    }
+
+    $noteTitle = trim($_POST['title']);
+    $noteDescription = trim($_POST['description']);
+    $noteId = intval($_POST['note_id']);
+
+    if(empty($noteTitle) || empty($noteDescription)) {
+        echo "Title and Description required";
+    } else {
+
+        // Update note in database
+        $updateNote = $conn->prepare("UPDATE notes set Title = ?, Description = ? where note_id = ? and user_id = ?");
+        $updateNote->bind_param("ssis",$noteTitle,$noteDescription,$noteId,$userId);
+        
+        if($updateNote->execute()) {
+            header("location:../dashboard.php");
+            exit();
+        } else {
+            echo "Error updating note";
+        }
+    }
+}
+
+$noteData = null;
+
+// Fetch note data for editing (GET request)
+if(isset($_GET['edit'])) {
+    
+    $noteId = intval($_GET['edit']);  // sanitize user input
+
+    $selectNote = $conn->prepare("SELECT * FROM notes WHERE note_id = ? AND user_id = ?");
+    $selectNote->bind_param("is",$noteId,$userId);
+    $selectNote->execute();
+    $fetchNote = $selectNote->get_result();
+
+    $noteData = mysqli_fetch_assoc($fetchNote);  // safely fetch result
+
+    if(!$noteData){
+        header("location:../dashboard.php");
+        exit();
+    }
+
+} else {
+    header("location:../dashboard.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -25,40 +80,10 @@ $userId = $_SESSION['userid'];
 </head>
 <body>
     <?php
-     if($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $noteTitle = trim($_POST['title']);
-        $noteDescription = trim($_POST['description']);
-        $noteId = intval($_POST['note_id']);
-
-        if(empty($noteTitle) || empty($noteDescription)) {
-            echo "Title and Description required";
-        } else {
-            $updateNote = $conn->prepare("UPDATE notes set Title = ?, Description = ? where note_id = ? and user_id = ?");
-            $updateNote->bind_param("ssis",$noteTitle,$noteDescription,$noteId,$userId);
-            
-            if($updateNote->execute()) {
-                header("location:../dashboard.php");
-                exit();
-            } else {
-                echo "Error updating note";
-            }
-        }
-    }
-    if(isset($_GET['edit'])) {
-        
-        $noteId = intval($_GET['edit']);  // sanitize user input
-
-        // use prepared statement
-        $selectNote = $conn->prepare("SELECT * FROM notes WHERE note_id = ? AND user_id = ?");
-        $selectNote->bind_param("is",$noteId,$userId);
-        $selectNote->execute();
-        $fetchNote = $selectNote->get_result();
-
-        $noteData = mysqli_fetch_assoc($fetchNote);  // safely fetch result
-    
         if($noteData) {
             echo  "<form action='edit.php' method='POST' class='edit-form'>
-                    <input type='hidden' name='note_id' value='" . $noteId . "'>
+                    <input type='hidden' name='note_id' value='" . $noteData['note_id'] . "'>
+                    <input type='hidden' name='csrf_token' value='" . $_SESSION['csrf_token'] . "'>
                     <label for='title'>Title:</label>
                     <input type='text' name='title' id='title' value='" . htmlspecialchars($noteData['Title']) . "'>
                     <label for='description'>Description:</label>
@@ -68,16 +93,11 @@ $userId = $_SESSION['userid'];
                     <button type='submit'>Update Note</button>
                     </div>
                     </form>";
-        } else {
-            echo "Note not found!";
         }
-    } else {
-        echo "Invalid Request";
-    }
     ?>
 </body>
 <script>
-    // Works even with bfcache (Back-Forward Cache)
+    // Reload page on back-forward cache to prevent stale data
     window.addEventListener('pageshow', function (event) {
         if (event.persisted) {
             window.location.reload();

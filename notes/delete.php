@@ -3,10 +3,22 @@ session_start();
 
 include "../includes/db.php";
 
+if(!isset($_SESSION['userid'])) {
+    echo "Unauthorized access.";
+    exit();
+}
+
 $userId = $_SESSION['userid'];
 
-if(isset($_GET['delete'])) {
-    $noteId = intval($_GET['delete']); // Sanitize the incoming note ID
+// Handle delete request
+if($_SERVER['REQUEST_METHOD'] == "POST") {
+
+    // CSRF token validation
+    if(!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die("CSRF token mismatch");
+    }
+
+    $noteId = intval($_POST['note_id']); // Sanitize the incoming note ID
     
     // Retrieve the filename associated with the note (for file deletion)
     $getFilename = $conn->prepare("SELECT Filename FROM notes WHERE note_id = ? AND user_id = ?");
@@ -17,7 +29,7 @@ if(isset($_GET['delete'])) {
     $noteData = $filenameResult->fetch_assoc();
 
     if($noteData) {
-        $filePath = "../uploads/" . $noteData['Filename'];
+        $filePath = __DIR__ . "/../../../uploads/" . $noteData['Filename'];
         
         // Delete the file from the server if it exists
         if(file_exists($filePath)) {
@@ -34,6 +46,7 @@ if(isset($_GET['delete'])) {
     header("location:../dashboard.php");
     exit();
 } else {
-    echo "Invalid Request";
+    header("location:../dashboard.php");
+    exit();
 }
 ?>
