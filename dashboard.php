@@ -1,7 +1,10 @@
 <?php
 session_start();
 
-include "includes/db.php";
+require_once "includes/db.php";
+require_once "includes/csrf.php";
+
+ensureFreshCsrfToken(); // Keeps rotating the token every 15 minutes
 
 // Prevent browser from caching this page (except for bfcache, which requires JS to handle)
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -13,10 +16,6 @@ header("Expires: 0");
 if (!isset($_SESSION['username']) || !isset($_SESSION['userid'])) {
     header("location:index.php");
     exit();
-}
-
-if(!isset($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
 $userId = $_SESSION['userid'];
@@ -33,25 +32,28 @@ $userId = $_SESSION['userid'];
 <body>
     <nav>
         <h1>Notes Dashboard</h1>
-        <h3><a href="auth/logout.php">Click to logout</a></h3>
+        <form action="auth/logout.php" method="POST">
+        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+        <button>Logout</button><br><br>
+    </form>
     </nav>
     <h2>Add New Note</h2>
     
     <?php
         // Show one-time error message
-        include "includes/alerts.php";
+        include_once "includes/alerts.php";
     ?>
 
     <!-- Form for creating a new note -->
     <form action="dashboard.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-        <label for="title">Title:</label><br>
-        <input type="text" name="title" id="title"><br><br>
-        <label for="description">Description:</label><br>
-        <textarea name="description" id="description" rows="4"></textarea><br><br>
+        <label for="title">Title:</label>
+        <input type="text" name="title" id="title">
+        <label for="description">Description:</label>
+        <textarea name="description" id="description" rows="4"></textarea>
         <label for="file">Upload File:</label>
-        <input type="file" name="file" id="file"><br><br>
-        <button>Add Note</button><br><br>
+        <input type="file" name="file" id="file">
+        <button>Add Note</button>
     </form>
     
     <?php
@@ -68,7 +70,9 @@ $userId = $_SESSION['userid'];
     if($_SERVER['REQUEST_METHOD'] == "POST") {
         
         if(!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-            die("CSRF token not set!");
+            $_SESSION['error'] = "Security token mismatch. Please try again.";
+            header("location:index.php");
+            exit();
         }
 
         $noteTitle = trim($_POST['title']);
@@ -78,6 +82,7 @@ $userId = $_SESSION['userid'];
         $uniqueFilename = "";
         $targetFilePath = "";
         $displayFilePath = "";
+        $extension = "";
         $fileIsValid = false;
         $error = [];
 
@@ -93,11 +98,13 @@ $userId = $_SESSION['userid'];
             $sanitizedFilename = preg_replace("/[^a-zA-Z0-9\.\-_]/","",basename($_FILES['file']['name']));
             $uniqueFilename = generateUniqueFileName($sanitizedFilename);
             $targetFilePath = $uploadDirectory . $uniqueFilename;
+            $extension = strtolower(pathinfo($sanitizedFilename,PATHINFO_EXTENSION));
 
             // Use finfo to detect MIME type and ensure it's allowed
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mime = finfo_file($finfo,$_FILES['file']['tmp_name']);
-            $allowedMimeTypes = ['application/pdf', 'image/jpeg', 'text/plain'];
+            $allowedMimeTypes = ['pdf' => 'application/pdf','jpg' => 'image/jpeg','jpeg' => 'image/jpeg','txt' => 'text/plain'];
+            $finfo_close($finfo);
 
             // Checks file size not exceed 5MB
             $maxFileSize = 5 * 1024 *1024;
@@ -107,7 +114,7 @@ $userId = $_SESSION['userid'];
             } else {
 
                 // Validate file type
-                if(!in_array($mime,$allowedMimeTypes)) {
+                if(!array_key_exists($extension,$allowedMimeTypes) || $allowedMimeTypes[$extension] !== $mime) {
                     $error[] = "Invalid file type";
                 } else {
                     $fileIsValid = true;
@@ -124,6 +131,9 @@ $userId = $_SESSION['userid'];
                 // Move uploaded file to target directory if valid
                 if($fileIsValid) {
                     move_uploaded_file($_FILES['file']['tmp_name'], $targetFilePath);
+                    
+                    // Set secure file permissions
+                    chmod($targetFilePath, 0644);    // Readable by server, not executable
                 }
                 $_SESSION['success'] = "Note saved successfully";
             } else {
@@ -178,12 +188,12 @@ $userId = $_SESSION['userid'];
                 echo "<td>" . htmlspecialchars($note['Description']) . "</td>";
                 $displayFilePath = __DIR__ . "/../../uploads/" . $note['Filename'];
                 if(!empty($note['Filename']) && file_exists($displayFilePath)) {
-                    echo "<td><div class='file-cell'><span class='filename'> <a href='notes/view.php?view=" . $note['note_id'] . "' target='_blank' rel='noopener noreferrer'>" . htmlspecialchars($note['OriginalFilename']) . "</a></span> <a href='uploads/" . rawurlencode($note['Filename']) . "' class='download-link' download='" . htmlspecialchars($note['OriginalFilename']) . "'>Download</a> </div> </td>";
+                    echo "<td><div class='file-cell'><span class='filename'> <a href='notes/view.php?view=" . $note['note_id'] . "' target='_blank' rel='noopener noreferrer' class='view-link'>" . htmlspecialchars($note['OriginalFilename']) . "</a></span> <a href='uploads/" . rawurlencode($note['Filename']) . "' class='download-link' download='" . htmlspecialchars($note['OriginalFilename']) . "'>Download</a> </div> </td>";
                 } else {
                     echo "<td>---</td>";
                 }
                 echo "<td class='action-buttons'>";
-                echo "<a href='notes/edit.php?edit=" . $note['note_id'] . "'>Edit</a>";
+                echo "<a href='notes/edit.php?edit=" . $note['note_id'] . "' class='edit'>Edit</a>";
                 echo "<form action='notes/delete.php' method='POST' onclick='return confirm(\"Are you sure. Do you want to delete this note?\");'>
                     <input type='hidden' name='note_id' value='" . $note['note_id'] . "'>
                     <input type='hidden' name='csrf_token' value='" . $_SESSION['csrf_token'] . "'>

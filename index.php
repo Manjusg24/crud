@@ -1,6 +1,10 @@
 <?php
 session_start();
 
+require_once "includes/csrf.php";
+
+ensureFreshCsrfToken();
+
 // Prevent browser from caching this page (except for bfcache, which requires JS to handle)
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
@@ -12,7 +16,9 @@ if(isset($_SESSION['username']))
     header("Location:dashboard.php");
     exit();
 }
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,16 +26,17 @@ if(isset($_SESSION['username']))
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inotes</title>
     <link rel="icon" href="assets/images/favicon.png">
-    <link rel="stylesheet" href="assets/css/auth.css">
+    <link rel="stylesheet" href="assets/css/ath.css">
 </head>
 <body>
     <div id="login-container">
         <img src="assets/images/logo.png" alt="Logo" class="logo">
         <?php
-            include 'includes/alerts.php';
+            include_once 'includes/alerts.php';
         ?>
         <div id="login-form-container" class="form-wrapper">
             <form action="auth/login.php" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 <input type="text" name="username" placeholder="Username" class="form-input" required>
                 <input type="password" name="password" placeholder="Password" class="form-input" required>
                 <input type="submit" class="submit-button" value="Log In">
