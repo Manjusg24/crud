@@ -1,16 +1,21 @@
 <?php
-include "../includes/db.php";
-
 session_start();
 
+require_once "../includes/db.php";
+require_once "../includes/csrf.php";
+require_once "../includes/alerts.php";
+require_once "../includes/database_utils.php";
+
+ensureFreshCsrfToken(); // Keeps rotating the token every 15 minutes
+
 // Prevent caching for security
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Pragma: no-cache");
-header("Expires: 0");
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 
 // Redirect if user not authenticated
 if(!isset($_SESSION['username']) || !isset($_SESSION['userid'])) {
-    header("location:../index.php");
+    header('Location:../index.php');
     exit();
 }
 
@@ -21,7 +26,9 @@ if($_SERVER['REQUEST_METHOD'] == "POST") {
 
     // CSRF token validation
     if(!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die("csrf token mismatch");
+        $_SESSION['error'] = "Security token mismatch. Please try again.";
+        header('Location:../dashboard.php');
+        exit();
     }
 
     $noteTitle = trim($_POST['title']);
@@ -29,19 +36,26 @@ if($_SERVER['REQUEST_METHOD'] == "POST") {
     $noteId = intval($_POST['note_id']);
 
     if(empty($noteTitle) || empty($noteDescription)) {
-        echo "Title and Description required";
+        $_SESSION['error'] = "Title and Description required";
+        header('Location: edit.php?edit=' . $noteId);
+        exit();
     } else {
 
         // Update note in database
-        $updateNote = $conn->prepare("UPDATE notes set Title = ?, Description = ? where note_id = ? and user_id = ?");
-        $updateNote->bind_param("ssis",$noteTitle,$noteDescription,$noteId,$userId);
+        $updateNote = safe_prepare($dbConnection, 'UPDATE notes set Title = ?, Description = ? where note_id = ? and user_id = ?', 'edit.php?edit=' . $noteId);
+        $updateNote->bind_param("ssis", $noteTitle, $noteDescription, $noteId, $userId);
+        safe_execute($updateNote, 'edit.php?edit=' . $noteId);
         
-        if($updateNote->execute()) {
-            header("location:../dashboard.php");
-            exit();
+        // Check if a row was actually updated
+        if($updateNote->affected_rows() > 0) {
+            $_SESSION['success'] = "Note updated successfully.";
         } else {
-            echo "Error updating note";
+            // This handles the case where the note_id doesn't belong to the user
+            $_SESSION['error'] = "Note not found or you don't have permission to edit it.";
         }
+        $updateNote->close();
+        header('Location:../dashboard.php');
+        exit();
     }
 }
 
@@ -52,20 +66,21 @@ if(isset($_GET['edit'])) {
     
     $noteId = intval($_GET['edit']);  // sanitize user input
 
-    $selectNote = $conn->prepare("SELECT * FROM notes WHERE note_id = ? AND user_id = ?");
-    $selectNote->bind_param("is",$noteId,$userId);
-    $selectNote->execute();
+    $selectNote = safe_prepare($dbConnection, 'SELECT * FROM notes WHERE note_id = ? AND user_id = ?', 'edit.php?edit=' . $noteId);
+    $selectNote->bind_param("is", $noteId, $userId);
+    safe_execute($selectNote, 'edit.php?edit=' . $noteId);
     $fetchNote = $selectNote->get_result();
 
-    $noteData = mysqli_fetch_assoc($fetchNote);  // safely fetch result
+    $noteData = $fetchNote->fetch_assoc();  // safely fetch result
+    $selectNote->close();
 
     if(!$noteData){
-        header("location:../dashboard.php");
+        header('Location:../dashboard.php');
         exit();
     }
 
 } else {
-    header("location:../dashboard.php");
+    header('Location:../dashboard.php');
     exit();
 }
 ?>
