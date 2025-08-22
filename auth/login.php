@@ -1,58 +1,73 @@
 <?php
 session_start();
 
-include '../includes/db.php';
+require_once '../includes/db.php';
+require_once '../includes/csrf.php';
+require_once '../includes/database_utils.php';
 
 if($_SERVER['REQUEST_METHOD'] == 'POST') {
+
+    if(!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        $_SESSION['error'] = "Security token mismatch. Please try again.";
+        header('Location:../index.php');
+        exit();
+    }
+
     // Trim and normalize inputs
-    $username = strtolower(trim($_POST["username"]));
-    $password = $_POST["password"];
+    $inputUsername = strtolower(trim($_POST['username']));
+    $inputPassword = $_POST['password'];
 
     // Server-side input validation
-    if(empty($username) || empty($password)) {
+    if(empty($inputUsername) || empty($inputPassword)) {
         $_SESSION['error'] = "Both username and password are required.";
-        header("location:../index.php");
+        header('Location:../index.php');
         exit();
     }
 
     // Prepare the SQL query with a placeholder
-    $stmt = $conn->prepare("Select * from `users` where Username = ?"); 
+    $userLookup = safe_prepare($dbConnection, 'Select * from `users` where Username = ?', 'index.php');
     
     // Bind the actual username value to the placeholder
-    $stmt->bind_param('s',$username); // "s" means string
+    $userLookup->bind_param('s',$inputUsername); // "s" means string
 
     // Execute the query
-    $stmt->execute();
+    safe_execute($userLookup, 'index.php');
 
     // Get the result
-    $result = $stmt->get_result();
+    $userResult = $userLookup->get_result();
     
     // Check if the user exists
-    if($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
+    if($userResult->num_rows === 1) {
+        $userRecord = $userResult->fetch_assoc();
         
         // Verify the password
-        if(password_verify($password,$user['Password'])) {
-            $_SESSION['username'] = $user['Username'];
-            $_SESSION['userid'] = $user['user_id'];
-            header("Location: ../dashboard.php");
+        if(password_verify($inputPassword,$userRecord['Password'])) {
+
+            session_regenerate_id(true); // Regenerate session ID to prevent fixation attacks
+
+            $_SESSION['username'] = $userRecord['Username'];
+            $_SESSION['userid'] = $userRecord['user_id'];
+
+            regenerateCsrfToken();  // Regenerate fresh token after successful login
+
+            header('Location: ../dashboard.php');
             exit();
         } else {
             $_SESSION['error'] = "Password incorrect";
-            header("Location: ../index.php");
+            header('Location: ../index.php');
             exit();
         }
 
     } else {
         $_SESSION['error'] = "Invalid username";
-        header("Location: ../index.php");
+        header('Location: ../index.php');
         exit();
     }
 
     // Close the statement
-    $stmt->close();
+    $userLookup->close();
 } else {
-    header("Location: ../index.php");
+    header('Location: ../index.php');
     exit();
 }
 

@@ -1,16 +1,20 @@
 <?php
 session_start();
 
-include '../includes/db.php';
+require_once '../includes/db.php';
+require_once '../includes/database_utils.php';
+require_once '../includes/alerts.php';
 
-if(!$conn) {
-    echo "Something went wrong. Please try again later.";
+if(!$dbConnection) {
+    $_SESSION['error'] = "Something went wrong. Please try again later.";
+    header('Location: register-form.php');
+    exit();
 }
 
 // Generate Unique UserId
 do {
     $userId = bin2hex(random_bytes(4));
-    $check = mysqli_query($conn,"SELECT 1 FROM users WHERE user_id = $userId");
+    $check = mysqli_query($dbConnection,"SELECT 1 FROM users WHERE user_id = '$userId'");
 } while($check->num_rows > 0);
 
 if($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -22,56 +26,66 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Server-side validation
     if (empty($fullname) || empty($username) || empty($password) || empty($email)) {
         $_SESSION['error'] = "All fields are required to register.";
-        header("Location: register-form.php");
+        header('Location: register-form.php');
+        exit();
+    }
+
+    // Enforces strong password
+    if(
+        strlen($password) < 8 ||
+        !preg_match("/[a-z]/",$password) || // at least one lowercase letter
+        !preg_match("/[A-Z]/",$password) || // at least one uppercase letter
+        !preg_match("/[0-9]/",$password) || // at least one number
+        !preg_match("/[\W]/",$password)     // at least one special character
+      ) {
+        $_SESSION['error'] = "Password must be atleast 8 characters long and include uppercase, lowercase, number and special character.";
+        header('Location: register-form.php');
         exit();
     }
     
     $hashedPassword = password_hash($password,PASSWORD_BCRYPT);
 
     // Check if username exists
-    $stmt1 = $conn->prepare("SELECT * FROM users WHERE `Username` = ?");
-    $stmt1->bind_param("s", $username);
-    $stmt1->execute();
-    $result1 = $stmt1->get_result();
+    $checkUsername = safe_prepare($dbConnection,"SELECT * FROM users WHERE `Username` = ?");
+    $checkUsername->bind_param("s", $username);
+    safe_execute($checkUsername);
+    $usernameResult = $checkUsername->get_result();
 
     // Check if email exists
-    $stmt2 = $conn->prepare("SELECT * FROM users WHERE `Email ID` = ?");
-    $stmt2->bind_param("s", $email);
-    $stmt2->execute();
-    $result2 = $stmt2->get_result();
+    $checkEmail = safe_prepare($dbConnection,"SELECT * FROM users WHERE `Email ID` = ?");
+    $checkEmail->bind_param("s", $email);
+    safe_execute($checkEmail);
+    $emailResult = $checkEmail->get_result();
 
-    if ($result1->num_rows > 0 && $result2->num_rows > 0) {
+    if ($usernameResult->num_rows > 0 && $emailResult->num_rows > 0) {
         $_SESSION['error'] = "Both username and email already exist. Account was not created";
-        header("Location: register-form.php");
+        header('Location: register-form.php');
         exit();
-    } elseif ($result1->num_rows > 0) {
+    } elseif ($usernameResult->num_rows > 0) {
         $_SESSION['error'] = "Username already exists. Please choose another";
-        header("Location: register-form.php");
+        header('Location: register-form.php');
         exit();
-    } elseif ($result2->num_rows > 0) {
+    } elseif ($emailResult->num_rows > 0) {
         $_SESSION['error'] = "Email already exists. Please use a different one";
-        header("Location: register-form.php");
+        header('Location: register-form.php');
         exit();
     } else {
         // If both are unique, insert the new user
-        $stmt3 = $conn->prepare("INSERT INTO `users` (`Full Name`, `Username`, `Password`, `Email ID`, `user_id`) VALUES (?, ?, ?, ?, ?)");
-        $stmt3->bind_param("sssss", $fullname, $username, $hashedPassword, $email, $userId);
+        $insertUser = safe_prepare($dbConnection,"INSERT INTO `users` (`full_name`, `username`, `password`, `email_id`, `user_id`) VALUES (?, ?, ?, ?, ?)");
+        $insertUser->bind_param("sssss", $fullname, $username, $hashedPassword, $email, $userId);
 
-        if($stmt3->execute()) {
-            $_SESSION['success'] = "Account created successfully! You can login..";
-            header("Location: ../index.php");
-            exit();
-        } else {
-            $_SESSION['error'] = "We couldn't create your account right now. Please try again shortly.";
-            header("Location: register-form.php");
-            exit();
-        }
-        $stmt3->close();
+        safe_execute($insertUser);
+        
+        $_SESSION['success'] = "Account created successfully! You can login..";
+        header('Location: ../index.php');
+        exit();
+        
+        $insertUser->close();
     }
-    $stmt1->close();
-    $stmt2->close();
+    $checkUsername->close();
+    $checkEmail->close();
 } else {
-    header("Location: register-form.php");
+    header('Location: register-form.php');
     exit();
 }
 

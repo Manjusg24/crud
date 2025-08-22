@@ -14,7 +14,7 @@ session_start();
     <div id="signup-container">
         <h3>Welcome to SIGN UP Page</h3>
         <?php
-            include '../includes/alerts.php';
+            include_once '../includes/alerts.php';
         ?>
         <div id="signup-form-container" class="form-wrapper">
             <form action="register.php" method="POST">
