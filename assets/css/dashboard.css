@@ -20,34 +20,57 @@ nav {
     left: 0;
     width: 100%;
     background-color: #2c3e50;
-    padding: 15px 30px;
+    padding: 10px 20px; /* ↓ reduce vertical padding here */
     color: #ecf0f1;
     display: flex;
     justify-content: space-between;
     align-items: center;
     z-index: 1000;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 60px; /* Optional: Force fixed height */
 }
+
 
 nav h1 {
     font-size: 1.5em;
 }
 
-nav a {
-    color: #ecf0f1;
-    text-decoration: none;
-    background: #e74c3c;
-    padding: 8px 12px;
+nav button {
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1;
+    margin: 0;
+    height: 36px; /* Ensures consistent height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 4px;
-    transition: background 0.3s;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 
-nav a:hover {
-    background: #c0392b;
+nav form {
+    display: flex;
+    align-items: center;  /* vertically center the button */
+    margin: 0;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    border: none;
 }
+
+/* Hover effect for logout button */
+nav button:hover {
+    background-color: #c0392b;
+}
+
 
 /* Headings */
 h2 {
+    margin-top: 80px;
     margin-bottom: 20px;
     color: #2c3e50;
 }
@@ -84,7 +107,7 @@ form button {
     border-radius: 4px;
     cursor: pointer;
     font-size: 1em;
-    transition: background 0.3s;
+    transition: background-color 0.3s;
 }
 
 form button:hover {
@@ -134,32 +157,116 @@ table tr:hover {
     }
 }
 
-/* Action buttons */
-.action-buttons a {
-    display: inline-block;
+/* === Action Buttons Container === */
+.action-buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;           /* vertically center buttons */
+    justify-content: flex-start;  /* align buttons to the left */
+    gap: 10px;                     /* space between buttons */
+    height: 100%;                  /* fill the cell */
+    padding: 14px 12px;            /* spacing inside the cell */
+}
+
+/* === Common Styles for Buttons and Links === */
+.action-buttons a.edit,
+.action-buttons button.delete {
     padding: 6px 12px;
-    margin-right: 5px;
-    text-decoration: none;
-    color: white;
+    font-size: 14px;
+    line-height: 1; /* Ensures consistent height */
+    vertical-align: middle; /* Aligns both vertically */
+    border: none;
     border-radius: 4px;
-    font-size: 0.9em;
-    transition: background 0.3s ease;
+    cursor: pointer;
+    color: white;
+    text-decoration: none;
+    display: inline-flex; /* Better alignment across elements */
+    align-items: center;  /* Vertically centers text inside */
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    height: 30px; /* Force consistent height */
 }
 
-.action-buttons .edit {
-    background-color: #27ae60;
+
+/* === Edit Link Styling === */
+.action-buttons a.edit {
+    background-color: #3cc540;
 }
 
-.action-buttons .edit:hover {
-    background-color: #219150;
+.action-buttons a.edit:hover {
+    background-color: #248429;
 }
 
-.action-buttons .delete {
-    background-color: #e74c3c;
+/* === Delete Button Styling === */
+.action-buttons button.delete {
+    background-color: #f44336;
 }
 
-.action-buttons .delete:hover {
-    background-color: #c0392b;
+.action-buttons button.delete:hover {
+    background-color: #d32f2f;
+}
+
+/* === Default Form Styling Inside Cell === */
+.action-buttons form {
+    background: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    max-width: none;
+    border-radius: 0;
+    display: inline;
+}
+
+
+/* Container for filename and download link */
+.file-cell {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Prevent very long filenames from breaking layout */
+.filename {
+    max-width: 60%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.view-link {
+    color: #444;              /* Slightly softer than title */
+    font-weight: 500;         /* A bit less bold */
+    font-size: 14px;          /* Slightly smaller than title */
+    text-decoration: none;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.view-link:hover {
+    color: #007bff;
+    text-decoration: underline;
+}
+
+
+table td:nth-child(2) { /* Title column */
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 15px;
+}
+
+table td:nth-child(3) { /* Description column */
+    color: #555;
+    font-size: 14px;
+    line-height: 1.4;
+    max-width: 300px;
+    word-wrap: break-word;
+    white-space: pre-wrap; /* Preserves line breaks */
 }
 
 /* --------- Edit Note Page Styles --------- */
@@ -222,4 +329,43 @@ table tr:hover {
 
 .cancel-link:hover {
     background-color: #999;
+}
+
+/* ---------- File Download Link Style ------------ */
+a.download-link {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+  
+a.download-link:hover {
+    background-color: #2980b9;
+}
+  
+/* --------  Pagination styles  --------- */
+.pagination {
+    margin: 20px 0;
+    text-align: center;
+}
+.pagination a {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 2px;
+    background: #f1f1f1;
+    color: #333;
+    text-decoration: none;
+    border-radius: 4px;
+}
+.pagination a.active {
+    background: #007BFF;
+    color: white;
+    font-weight: bold;
+}
+.pagination a:hover {
+    background: #ddd;
 }
